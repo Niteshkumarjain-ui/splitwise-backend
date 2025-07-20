@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     private String name;
 
@@ -24,5 +25,9 @@ public class User {
     private String password;
 
     private LocalDateTime createdAt;
+
+    @ManyToMany(mappedBy = "members")
+    private List<Group> groups;
+
 
 }
