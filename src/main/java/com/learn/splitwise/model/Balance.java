@@ -1,6 +1,5 @@
 package com.learn.splitwise.model;
 
-import com.learn.splitwise.repository.UserRepository;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
