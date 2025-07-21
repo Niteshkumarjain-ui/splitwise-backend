@@ -26,8 +26,8 @@ public class User {
 
     private LocalDateTime createdAt;
 
-    @ManyToMany(mappedBy = "members")
-    private List<Group> groups;
+//    @ManyToMany(mappedBy = "members")
+//    private List<Group> groups;
 
 
 }
