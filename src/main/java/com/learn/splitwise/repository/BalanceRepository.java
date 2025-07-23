@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface BalanceRepository extends JpaRepository<Balance, Long> {
     Optional<Balance> findByFromUserAndToUserAndGroup(User fromUser, User toUser, Group group);
     List<Balance> findALlByGroup(Group group);
+    List<Balance> findAllByFromUser(User fromUser);
+    List<Balance> findAllByToUser(User toUser);
 }

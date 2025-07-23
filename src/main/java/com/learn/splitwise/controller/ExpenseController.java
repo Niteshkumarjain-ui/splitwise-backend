@@ -1,6 +1,7 @@
 package com.learn.splitwise.controller;
 
 import com.learn.splitwise.dto.CreateExpenseRequest;
+import com.learn.splitwise.dto.UpdateExpenseRequest;
 import com.learn.splitwise.model.Expense;
 import com.learn.splitwise.service.ExpenseService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,5 +24,17 @@ public class ExpenseController {
     public ResponseEntity<Expense> createExpense(@RequestBody CreateExpenseRequest request) {
         Expense expense = expenseService.createExpense(request);
         return ResponseEntity.ok(expense);
+    }
+
+    @PutMapping("/{expenseId}")
+    public ResponseEntity<Expense> updateExpense(@PathVariable Long expenseId, @RequestBody UpdateExpenseRequest request) {
+        Expense updated = expenseService.updateExpense(expenseId, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("{expenseId}")
+    public ResponseEntity<String> deleteExpense(@PathVariable Long expenseId) {
+        expenseService.deleteExpense(expenseId);
+        return ResponseEntity.ok("Expense deleted successfully");
     }
 }

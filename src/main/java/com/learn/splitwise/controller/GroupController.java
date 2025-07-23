@@ -2,7 +2,6 @@ package com.learn.splitwise.controller;
 
 import com.learn.splitwise.dto.CreateGroupRequest;
 import com.learn.splitwise.dto.ExpenseResponse;
-import com.learn.splitwise.model.Expense;
 import com.learn.splitwise.model.Group;
 import com.learn.splitwise.service.ExpenseService;
 import com.learn.splitwise.service.GroupService;

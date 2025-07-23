@@ -2,9 +2,11 @@ package com.learn.splitwise.service;
 
 import com.learn.splitwise.dto.CreateExpenseRequest;
 import com.learn.splitwise.dto.ExpenseResponse;
+import com.learn.splitwise.dto.UpdateExpenseRequest;
 import com.learn.splitwise.exception.CustomException;
 import com.learn.splitwise.model.*;
 import com.learn.splitwise.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -133,5 +135,80 @@ public class ExpenseService {
                             .splits(splits)
                             .build();
                 }).toList();
+    }
+
+    @Transactional
+    public Expense updateExpense(Long expenseId, UpdateExpenseRequest request) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException("Expense is not found", HttpStatus.NOT_FOUND));
+
+        List<Split> oldSplits = splitRepository.findByExpense(expense);
+        for (Split split : oldSplits) {
+            if (!split.getUser().getId().equals(expense.getCreatedBy().getId())) {
+                reverseBalance(split.getUser(), expense.getCreatedBy(), split.getAmount(), expense.getGroup());
+            }
+        }
+        // Delete old splits
+        splitRepository.deleteAll(oldSplits);
+
+        // Update expense
+        expense.setDescription(request.getDescription());
+        expense.setAmount(request.getAmount());
+        expenseRepository.save(expense);
+
+        List<User> users = userRepository.findAllById(request.getSplitAmongUserIds());
+        double splitAmount = request.getAmount() / users.size();
+
+        for (User user : users) {
+            Split newSplit = Split.builder()
+                    .expense(expense)
+                    .user(user)
+                    .amount(splitAmount)
+                    .build();
+            splitRepository.save(newSplit);
+
+            if(!user.getId().equals(expense.getCreatedBy().getId())) {
+                updateBalance(user, expense.getCreatedBy(), splitAmount, expense.getGroup());
+            }
+        }
+
+        return expense;
+    }
+
+    private void reverseBalance(User fromUser, User toUser, Double amount, Group group) {
+        Balance balance = balanceRepository.findByFromUserAndToUserAndGroup(fromUser, toUser, group).orElse(null);
+
+        if (balance != null) {
+            if (balance.getAmount() > amount) {
+                balance.setAmount(balance.getAmount() - amount);
+                balanceRepository.save(balance);
+            } else if (balance.getAmount().equals(amount)) {
+                balanceRepository.delete(balance);
+            } else {
+                balanceRepository.delete(balance);
+                updateBalance(toUser, fromUser, amount - balance.getAmount(), group);
+            }
+        } else {
+            updateBalance(toUser, fromUser, amount, group);
+        }
+    }
+
+    @Transactional
+    public void deleteExpense(Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException("Expense not found", HttpStatus.NOT_FOUND));
+
+        // reverse all balances
+        List<Split>splits = splitRepository.findByExpense(expense);
+
+        for(Split split: splits) {
+            if (!split.getUser().getId().equals(expense.getCreatedBy().getId())) {
+                reverseBalance(split.getUser(), expense.getCreatedBy(), split.getAmount(), expense.getGroup());
+            }
+        }
+
+        splitRepository.deleteAll(splits);
+        expenseRepository.delete(expense);
+
     }
 }
