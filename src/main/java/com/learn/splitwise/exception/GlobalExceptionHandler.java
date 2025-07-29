@@ -22,6 +22,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, ex.getStatus());
     }
 
+    @ExceptionHandler(JwtExceptionHandler.class)
+    public ResponseEntity<?> handleCustomException(JwtExceptionHandler ex, WebRequest request) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        body.put("status", ex.getStatus().value());
+
+        return new ResponseEntity<>(body, ex.getStatus());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleOtherExceptions(Exception ex, WebRequest request) {
         Map<String, Object> body = new HashMap<>();
