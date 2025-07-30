@@ -13,7 +13,7 @@ import java.util.Date;
 @Service
 public class JwtService {
     private Key secretKey;
-    private final long jwtExpiration = 1000 * 60 * 1; // 10 hours
+    private final long jwtExpiration = 1000 * 60 * 10; // 10 hours
 
     @PostConstruct
     public void init() {

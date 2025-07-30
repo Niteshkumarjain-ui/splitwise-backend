@@ -1,6 +1,7 @@
 package com.learn.splitwise.controller;
 
 import com.learn.splitwise.dto.CreateExpenseRequest;
+import com.learn.splitwise.dto.ExpenseDetailsResponse;
 import com.learn.splitwise.dto.UpdateExpenseRequest;
 import com.learn.splitwise.model.Expense;
 import com.learn.splitwise.service.ExpenseService;
@@ -36,5 +37,11 @@ public class ExpenseController {
     public ResponseEntity<String> deleteExpense(@PathVariable Long expenseId) {
         expenseService.deleteExpense(expenseId);
         return ResponseEntity.ok("Expense deleted successfully");
+    }
+
+    @GetMapping("{expenseId}")
+    public ResponseEntity<ExpenseDetailsResponse> getExpenseDetails(@PathVariable Long expenseId) {
+        ExpenseDetailsResponse response = expenseService.getExpenseDetails(expenseId);
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,6 +1,7 @@
 package com.learn.splitwise.service;
 
 import com.learn.splitwise.dto.CreateExpenseRequest;
+import com.learn.splitwise.dto.ExpenseDetailsResponse;
 import com.learn.splitwise.dto.ExpenseResponse;
 import com.learn.splitwise.dto.UpdateExpenseRequest;
 import com.learn.splitwise.exception.CustomException;
@@ -12,8 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -209,6 +210,33 @@ public class ExpenseService {
 
         splitRepository.deleteAll(splits);
         expenseRepository.delete(expense);
+    }
+
+    public ExpenseDetailsResponse getExpenseDetails(Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException("Expense not found", HttpStatus.NOT_FOUND));
+
+        List<Split> splits = splitRepository.findByExpense(expense);
+
+        List<ExpenseDetailsResponse.Split> splitList = new ArrayList<>();
+        for (Split split: splits) {
+            splitList.add( ExpenseDetailsResponse.Split.builder()
+                    .userName(split.getUser().getName())
+                    .amountOwed(split.getAmount())
+                    .build()
+            );
+        }
+
+        return ExpenseDetailsResponse.builder()
+                .id(expense.getId())
+                .description(expense.getDescription())
+                .paidBy(expense.getCreatedBy().getName())
+                .splits(splitList)
+                .amount(expense.getAmount())
+                .createdAt(expense.getCreatedAt())
+                .build();
+
+
 
     }
 }
