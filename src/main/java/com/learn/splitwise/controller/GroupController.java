@@ -2,6 +2,7 @@ package com.learn.splitwise.controller;
 
 import com.learn.splitwise.dto.CreateGroupRequest;
 import com.learn.splitwise.dto.ExpenseResponse;
+import com.learn.splitwise.dto.GroupDashboardResponse;
 import com.learn.splitwise.model.Group;
 import com.learn.splitwise.service.ExpenseService;
 import com.learn.splitwise.service.GroupService;
@@ -33,5 +34,11 @@ public class GroupController {
     public ResponseEntity<List<ExpenseResponse>> getGroupExpense(@PathVariable Long groupId) {
         List<ExpenseResponse> expenses = expenseService.getExpensesByGroup(groupId);
         return ResponseEntity.ok(expenses);
+    }
+
+    @GetMapping("/{groupId}/dashboard")
+    public ResponseEntity<GroupDashboardResponse> getGroupDashboard(@PathVariable Long groupId) {
+        GroupDashboardResponse res = groupService.getGroupDashboard(groupId);
+        return ResponseEntity.ok(res);
     }
 }
