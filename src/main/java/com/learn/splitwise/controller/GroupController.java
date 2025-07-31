@@ -1,8 +1,6 @@
 package com.learn.splitwise.controller;
 
-import com.learn.splitwise.dto.CreateGroupRequest;
-import com.learn.splitwise.dto.ExpenseResponse;
-import com.learn.splitwise.dto.GroupDashboardResponse;
+import com.learn.splitwise.dto.*;
 import com.learn.splitwise.model.Group;
 import com.learn.splitwise.service.ExpenseService;
 import com.learn.splitwise.service.GroupService;
@@ -16,7 +14,7 @@ import java.util.List;
 
 @Tag(name = "Group")
 @RestController
-@RequestMapping("/api/groups")
+@RequestMapping("/api/group")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class GroupController {
@@ -40,5 +38,17 @@ public class GroupController {
     public ResponseEntity<GroupDashboardResponse> getGroupDashboard(@PathVariable Long groupId) {
         GroupDashboardResponse res = groupService.getGroupDashboard(groupId);
         return ResponseEntity.ok(res);
+    }
+
+    @PutMapping("{groupId}")
+    public ResponseEntity<UpdateGroupResponse> updateGroup(@PathVariable Long groupId, @RequestBody UpdateGroupRequest request) {
+        UpdateGroupResponse response = groupService.updateGroup(groupId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("{groupId}")
+    public ResponseEntity<String> deleteGroup(@PathVariable Long groupId) {
+        groupService.deleteGroup(groupId);
+        return ResponseEntity.ok("Group Deleted Successfully");
     }
 }

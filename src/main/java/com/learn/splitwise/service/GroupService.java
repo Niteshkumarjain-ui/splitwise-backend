@@ -2,6 +2,8 @@ package com.learn.splitwise.service;
 
 import com.learn.splitwise.dto.CreateGroupRequest;
 import com.learn.splitwise.dto.GroupDashboardResponse;
+import com.learn.splitwise.dto.UpdateGroupRequest;
+import com.learn.splitwise.dto.UpdateGroupResponse;
 import com.learn.splitwise.exception.CustomException;
 import com.learn.splitwise.model.Balance;
 import com.learn.splitwise.model.Expense;
@@ -11,6 +13,7 @@ import com.learn.splitwise.repository.BalanceRepository;
 import com.learn.splitwise.repository.ExpenseRepository;
 import com.learn.splitwise.repository.GroupRepository;
 import com.learn.splitwise.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -183,5 +186,49 @@ public class GroupService {
         all.addAll(debitors);
         all.addAll(creditors);
         return all;
+    }
+
+    public UpdateGroupResponse updateGroup(Long groupId, UpdateGroupRequest request) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomException("Group Not found", HttpStatus.NOT_FOUND));
+
+        if (request.getName() != null && !request.getName().isEmpty()) {
+            group.setName(request.getName());
+        }
+        if (request.getDescription() != null && !request.getDescription().isEmpty()) {
+            group.setDescription(request.getDescription());
+        }
+
+        // Update members if provided
+        if (request.getMemberIds() != null && !request.getMemberIds().isEmpty()) {
+            List<User> members = userRepository.findAllById(request.getMemberIds());
+            group.setMembers(members); // replaces old members
+        }
+
+        groupRepository.save(group);
+
+        return UpdateGroupResponse.builder()
+                .id(groupId)
+                .description(group.getDescription())
+                .name(group.getName())
+                .createdAt(group.getCreatedAt())
+                .members(group.getMembers()
+                        .stream()
+                        .map(user -> UpdateGroupResponse.Members.builder()
+                                .userId(user.getId())
+                                .name(user.getName())
+                                .build()
+                        ).toList()
+                ).build();
+    }
+
+    @Transactional
+    public void deleteGroup(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomException("Group Not found", HttpStatus.NOT_FOUND));
+
+        group.getMembers().clear();
+        groupRepository.save(group);
+        groupRepository.delete(group);
     }
 }
