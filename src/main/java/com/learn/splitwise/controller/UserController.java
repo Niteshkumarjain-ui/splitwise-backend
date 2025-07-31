@@ -1,15 +1,15 @@
 package com.learn.splitwise.controller;
 
 import com.learn.splitwise.dto.NetBalanceResponse;
+import com.learn.splitwise.dto.UpdateUserRequest;
 import com.learn.splitwise.dto.UserDashboardResponse;
+import com.learn.splitwise.model.User;
 import com.learn.splitwise.security.JwtService;
 import com.learn.splitwise.service.BalanceService;
 import com.learn.splitwise.service.UserService;
-import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,6 +45,11 @@ public class UserController {
         String email = jwtService.extractEmail(token);
         UserDashboardResponse response = userService.getDashboard(email);
         return ResponseEntity.ok(response);
+    }
 
+    @PutMapping("/{userId}")
+    public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody UpdateUserRequest request) {
+        com.learn.splitwise.model.User updatedUser = userService.updateUser(userId, request);
+        return ResponseEntity.ok(updatedUser);
     }
 }
