@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Expense")
 @RestController
-@RequestMapping("/api/expenses")
+@RequestMapping("/api/expense")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class ExpenseController {

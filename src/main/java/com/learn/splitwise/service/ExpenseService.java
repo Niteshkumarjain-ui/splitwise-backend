@@ -72,45 +72,52 @@ public class ExpenseService {
     }
 
     public void updateBalance(User fromUser, User toUser, double amount, Group group) {
-        Balance existing = balanceRepository.findByFromUserAndToUserAndGroup(fromUser, toUser, group)
-                .orElse(null);
+        // 1. Check existing forward balance
+        Balance forward = balanceRepository.findByFromUserAndToUserAndGroup(fromUser, toUser, group).orElse(null);
+        Balance reverse = balanceRepository.findByFromUserAndToUserAndGroup(toUser, fromUser, group).orElse(null);
 
-        if (existing != null) {
-            existing.setAmount(existing.getAmount() + amount);
-            balanceRepository.save(existing);
-        } else {
-            // check reverse case
-            Balance reverse = balanceRepository.findByFromUserAndToUserAndGroup(toUser, fromUser, group)
-                    .orElse(null);
+        if (forward != null) {
+            // Case 1: already owes in same direction → add amount
+            forward.setAmount(forward.getAmount() + amount);
+            balanceRepository.save(forward);
 
-            if (reverse != null) {
-                if (reverse.getAmount() > amount) {
-                    reverse.setAmount(reverse.getAmount() - amount);
-                    balanceRepository.save(reverse);
-                } else if (reverse.getAmount() < amount) {
-                    balanceRepository.save(Balance.builder()
-                            .fromUser(fromUser)
-                            .toUser(toUser)
-                            .amount(amount-reverse.getAmount())
-                            .group(group)
-                            .build()
-                    );
-                } else {
-                    balanceRepository.delete(reverse);
-                }
-            } else {
-                // no previous balance at all
+        } else if (reverse != null) {
+            // Case 2: reverse direction exists → offset
+            if (reverse.getAmount() > amount) {
+                // reduce reverse balance
+                reverse.setAmount(reverse.getAmount() - amount);
+                balanceRepository.save(reverse);
+
+            } else if (reverse.getAmount() < amount) {
+                // delete reverse and create new forward
+                double newAmount = amount - reverse.getAmount();
+                balanceRepository.delete(reverse);
+
                 balanceRepository.save(Balance.builder()
                         .fromUser(fromUser)
                         .toUser(toUser)
-                        .amount(amount)
+                        .amount(newAmount)
                         .group(group)
                         .build()
                 );
+
+            } else {
+                // exact offset → delete reverse
+                balanceRepository.delete(reverse);
             }
 
+        } else {
+            // Case 3: no previous balance → create new forward
+            balanceRepository.save(Balance.builder()
+                    .fromUser(fromUser)
+                    .toUser(toUser)
+                    .amount(amount)
+                    .group(group)
+                    .build()
+            );
         }
     }
+
 
     public List<ExpenseResponse> getExpensesByGroup(Long groupId) {
         Group group = groupRepository.findById(groupId)

@@ -9,10 +9,7 @@ import com.learn.splitwise.model.Balance;
 import com.learn.splitwise.model.Expense;
 import com.learn.splitwise.model.Group;
 import com.learn.splitwise.model.User;
-import com.learn.splitwise.repository.BalanceRepository;
-import com.learn.splitwise.repository.ExpenseRepository;
-import com.learn.splitwise.repository.GroupRepository;
-import com.learn.splitwise.repository.UserRepository;
+import com.learn.splitwise.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,6 +29,7 @@ public class GroupService {
     private final UserRepository userRepository;
     private final BalanceRepository balanceRepository;
     private final ExpenseRepository expenseRepository;
+    private final SplitRepository splitRepository;
 
     public Group createGroup(CreateGroupRequest request) {
 
@@ -117,54 +115,64 @@ public class GroupService {
     public List<GroupDashboardResponse.NetBalances> computeNetBalances(List<Balance> balances) {
         Map<Long, Double> netMap = new HashMap<>();
 
-        for (Balance b: balances) {
-            netMap.put(b.getFromUser().getId(), netMap.getOrDefault(b.getFromUser().getId(),0.0) - b.getAmount());
-            netMap.put(b.getToUser().getId(), netMap.getOrDefault(b.getToUser().getId(),0.0) + b.getAmount());
+        // Step 1: Compute net balances
+        for (Balance b : balances) {
+            netMap.put(b.getFromUser().getId(), netMap.getOrDefault(b.getFromUser().getId(), 0.0) - b.getAmount());
+            netMap.put(b.getToUser().getId(), netMap.getOrDefault(b.getToUser().getId(), 0.0) + b.getAmount());
         }
 
-        // seperate creditor/debitors
+        // Step 2: Create creditors & debtors lists
         List<GroupDashboardResponse.NetBalances> creditors = new ArrayList<>();
-        List<GroupDashboardResponse.NetBalances> debitors = new ArrayList<>();
+        List<GroupDashboardResponse.NetBalances> debtors = new ArrayList<>();
 
         for (Map.Entry<Long, Double> entry : netMap.entrySet()) {
-            Double amount = entry.getValue();
-            GroupDashboardResponse.NetBalances netBalance = GroupDashboardResponse.NetBalances.builder()
+            double amount = entry.getValue();
+            GroupDashboardResponse.NetBalances nb = GroupDashboardResponse.NetBalances.builder()
                     .userId(entry.getKey())
-                    .netBalance(amount)
+                    .netBalance(amount) // preserve original net balance
                     .build();
-            if (amount > 0) creditors.add(netBalance);
-            else if (amount < 0) debitors.add(netBalance);
+
+            if (amount > 0.0001) creditors.add(nb);
+            else if (amount < -0.0001) debtors.add(nb);
         }
 
-        // Match debitors to creaditors
+        // Step 3: Distribute debts (using a temp balance map to avoid losing original net balance)
+        Map<Long, Double> tempCredits = new HashMap<>();
+        for (GroupDashboardResponse.NetBalances creditor : creditors) {
+            tempCredits.put(creditor.getUserId(), creditor.getNetBalance());
+        }
 
-        for (GroupDashboardResponse.NetBalances debtors: debitors) {
-            Double debt = - debtors.getNetBalance();
+        for (GroupDashboardResponse.NetBalances debtor : debtors) {
+            double debt = -debtor.getNetBalance(); // convert to positive
             List<GroupDashboardResponse.NetBalances.UserShare> payToList = new ArrayList<>();
 
-            for (GroupDashboardResponse.NetBalances credior: creditors) {
-                if (debt == 0) break;
+            for (GroupDashboardResponse.NetBalances creditor : creditors) {
+                if (debt < 0.0001) break;
 
-                Double credit = credior.getNetBalance();
-                if (credit == 0) continue;
+                double creditAvailable = tempCredits.getOrDefault(creditor.getUserId(), 0.0);
+                if (creditAvailable < 0.0001) continue;
 
-                Double paid = Math.min(credit, debt);
+                double paid = Math.min(creditAvailable, debt);
+
+                // Record payment
                 payToList.add(GroupDashboardResponse.NetBalances.UserShare.builder()
-                        .userId(credior.getUserId())
+                        .userId(creditor.getUserId())
                         .amount(paid)
-                        .build()
-                );
-                credior.setNetBalance(credit-paid);
+                        .build());
+
+                // Reduce temp balances
+                tempCredits.put(creditor.getUserId(), creditAvailable - paid);
                 debt -= paid;
             }
-            debtors.setShouldPayTo(payToList);
+
+            debtor.setShouldPayTo(payToList);
         }
 
-        for (GroupDashboardResponse.NetBalances creditor: creditors) {
-            Double credit = - creditor.getNetBalance();
-            List<GroupDashboardResponse.NetBalances.UserShare> receiveFromList  = new ArrayList<>();
+        // Step 4: Compute shouldReceiveFrom from debtors' shouldPayTo
+        for (GroupDashboardResponse.NetBalances creditor : creditors) {
+            List<GroupDashboardResponse.NetBalances.UserShare> receiveFromList = new ArrayList<>();
 
-            for (GroupDashboardResponse.NetBalances debtor: debitors) {
+            for (GroupDashboardResponse.NetBalances debtor : debtors) {
                 if (debtor.getShouldPayTo() == null) continue;
 
                 for (GroupDashboardResponse.NetBalances.UserShare share : debtor.getShouldPayTo()) {
@@ -172,21 +180,23 @@ public class GroupService {
                         receiveFromList.add(GroupDashboardResponse.NetBalances.UserShare.builder()
                                 .userId(debtor.getUserId())
                                 .amount(share.getAmount())
-                                .build()
-                        );
+                                .build());
                     }
                 }
-
-
             }
 
             creditor.setShouldReceiveFrom(receiveFromList);
+            // ✅ netBalance stays as original positive value
         }
+
+        // Step 5: Combine debtors and creditors into one list
         List<GroupDashboardResponse.NetBalances> all = new ArrayList<>();
-        all.addAll(debitors);
+        all.addAll(debtors);
         all.addAll(creditors);
+
         return all;
     }
+
 
     public UpdateGroupResponse updateGroup(Long groupId, UpdateGroupRequest request) {
         Group group = groupRepository.findById(groupId)
@@ -227,6 +237,17 @@ public class GroupService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new CustomException("Group Not found", HttpStatus.NOT_FOUND));
 
+        // 1. Delete Splits of all Expenses in this group
+        List<Expense> expenses = expenseRepository.findByGroup(group);
+        for (Expense expense : expenses) {
+            splitRepository.deleteByExpense(expense);
+        }
+
+        // 2. Delete Expenses
+        expenseRepository.deleteAll(expenses);
+
+        // 3. Delete Balances
+        balanceRepository.deleteByGroup(group);
         group.getMembers().clear();
         groupRepository.save(group);
         groupRepository.delete(group);

@@ -15,6 +15,7 @@ public interface BalanceRepository extends JpaRepository<Balance, Long> {
     List<Balance> findALlByGroup(Group group);
     List<Balance> findAllByFromUser(User fromUser);
     List<Balance> findAllByToUser(User toUser);
+    void deleteByGroup(Group group);
 
     @Query("SELECT COALESCE(SUM(b.amount), 0) FROM Balance b WHERE b.toUser = :user AND b.group = :group")
     Double getTotalAmountToUserInGroup(@Param("user") User user, @Param("group") Group group);
