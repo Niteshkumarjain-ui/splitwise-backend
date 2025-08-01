@@ -1,4 +1,4 @@
-# 🧾 Splitwise Clone - Backend
+# 🧾 Splitwise - Backend
 
 A backend system for managing shared group expenses, similar to Splitwise. Built using **Java**, **Spring Boot**, **PostgreSQL**, and **JWT**. The project supports user authentication, group and expense management, balance tracking, and simplified debt resolution. Includes interactive API docs via **Swagger**.
 
