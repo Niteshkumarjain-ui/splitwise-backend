@@ -35,16 +35,16 @@ A backend system for managing shared group expenses, similar to Splitwise. Built
 ## 📁 Folder Structure
 
 ```
-com.splitwise
-├── config           # Open Api & Security config
-├── controller       # API endpoints
-├── service          # Interfaces + Implementations
-├── model            # JPA Entity classes
-├── dto              # Request/Response payloads
-├── repository       # Database access layer
-├── exception        # Custom & Global exception handler
-├── security         # JWT, token utilites
-└── SplitwiseApp     # Spring Boot main class
+com.learn.splitwise
+├── config                   # Open Api & Security config
+├── controller               # API endpoints
+├── service                  # Interfaces + Implementations
+├── model                    # JPA Entity classes
+├── dto                      # Request/Response payloads
+├── repository               # Database access layer
+├── exception                # Custom & Global exception handler
+├── security                 # JWT, token utilites
+└── SplitwiseApplication     # Spring Boot main class
 
 ```
 
