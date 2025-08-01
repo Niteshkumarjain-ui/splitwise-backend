@@ -11,22 +11,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Balance")
+@Tag(name = "Settle")
 @RestController
-@RequestMapping("/api/groups")
+@RequestMapping("/api/settle")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class BalanceController {
 
     private final BalanceService balanceService;
 
-    @GetMapping("{groupId}/balances")
-    public ResponseEntity<List<GroupBalanceResponse>> getGroupBalance(@PathVariable Long groupId) {
-        List<GroupBalanceResponse> balances = balanceService.getGroupBalance(groupId);
-        return ResponseEntity.ok(balances);
-    }
-
-    @PostMapping("{groupId}/settle")
+    @PostMapping("/group/{groupId}")
     public ResponseEntity<String> settleUp(@PathVariable Long groupId, @RequestBody SettleUpRequest request) {
         balanceService.settleUp(groupId, request);
         return ResponseEntity.ok("Settlement Succesfully");

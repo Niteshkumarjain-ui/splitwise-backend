@@ -25,22 +25,6 @@ public class BalanceService {
     private final BalanceRepository balanceRepository;
     private final UserRepository userRepository;
 
-    public List<GroupBalanceResponse> getGroupBalance(Long groupId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new CustomException("Group Not Found", HttpStatus.NOT_FOUND));
-
-        List<Balance> balances = balanceRepository.findALlByGroup(group);
-
-        return balances.stream()
-                .map(bal -> new GroupBalanceResponse(
-                        bal.getFromUser().getName(),
-                        bal.getToUser().getName(),
-                        bal.getAmount()
-                        )
-                        ).collect(Collectors.toList());
-
-    }
-
     public void settleUp(Long groupId, SettleUpRequest request) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new CustomException("Group Not Found", HttpStatus.NOT_FOUND));
