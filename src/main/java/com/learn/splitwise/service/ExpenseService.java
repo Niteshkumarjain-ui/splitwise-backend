@@ -160,12 +160,14 @@ public class ExpenseService {
         splitRepository.deleteAll(oldSplits);
 
         // Update expense
-        expense.setDescription(request.getDescription());
-        expense.setAmount(request.getAmount());
+        if (request.getDescription() != null && request.getDescription().isEmpty())
+            expense.setDescription(request.getDescription());
+        if (request.getAmount() != null && request.getAmount() != 0.0)
+            expense.setAmount(request.getAmount());
         expenseRepository.save(expense);
 
         List<User> users = userRepository.findAllById(request.getSplitAmongUserIds());
-        double splitAmount = request.getAmount() / users.size();
+        Double splitAmount = expense.getAmount() / users.size();
 
         for (User user : users) {
             Split newSplit = Split.builder()
