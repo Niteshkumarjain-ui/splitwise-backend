@@ -1,5 +1,6 @@
 package com.learn.splitwise.controller;
 
+import com.learn.splitwise.dto.GetAllUserResponse;
 import com.learn.splitwise.dto.NetBalanceResponse;
 import com.learn.splitwise.dto.UpdateUserRequest;
 import com.learn.splitwise.dto.UserDashboardResponse;
@@ -51,5 +52,11 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody UpdateUserRequest request) {
         com.learn.splitwise.model.User updatedUser = userService.updateUser(userId, request);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<GetAllUserResponse>> getAllUser() {
+        List<GetAllUserResponse> responses = userService.getAllUser();
+        return ResponseEntity.ok(responses);
     }
 }

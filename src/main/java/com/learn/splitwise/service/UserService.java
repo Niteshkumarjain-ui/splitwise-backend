@@ -1,5 +1,6 @@
 package com.learn.splitwise.service;
 
+import com.learn.splitwise.dto.GetAllUserResponse;
 import com.learn.splitwise.dto.UpdateUserRequest;
 import com.learn.splitwise.dto.UserDashboardResponse;
 import com.learn.splitwise.exception.CustomException;
@@ -83,4 +84,21 @@ public class UserService {
                 .build();
 
     }
+
+    public List<GetAllUserResponse> getAllUser() {
+        List<User> users = userRepository.findAll();
+
+        List<GetAllUserResponse> allUsers = new ArrayList<>();
+        for (User user: users) {
+            allUsers.add(
+                    GetAllUserResponse.builder()
+                            .emailId(user.getEmail())
+                            .name(user.getName())
+                            .id(user.getId())
+                            .build()
+            );
+        }
+        return allUsers;
+    }
+
 }
