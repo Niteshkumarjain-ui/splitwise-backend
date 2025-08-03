@@ -21,5 +21,16 @@ public class UserDashboardResponse {
         private Long groupId;
         private String groupName;
         private Double balance;
+        private String description;
+        private List<UserInfo> memberIds;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @Builder
+    public static class UserInfo {
+        private Long id;
+        private String name;
+        private String emailId;
     }
 }

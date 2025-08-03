@@ -37,22 +37,29 @@ public class AuthService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
         String token = jwtService.generateToken(user.getEmail());
-        return new JwtResponse(token);
+        return JwtResponse.builder()
+                .token(token)
+                .userId(savedUser.getId())
+                .build();
     }
 
     public JwtResponse login(LoginRequest request) {
 
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         } catch (Exception ex) {
             throw new CustomException("Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(()-> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         String token = jwtService.generateToken(request.getEmail());
-        return new JwtResponse(token);
+        return JwtResponse.builder()
+                .userId(user.getId())
+                .token(token)
+                .build();
     }
 }

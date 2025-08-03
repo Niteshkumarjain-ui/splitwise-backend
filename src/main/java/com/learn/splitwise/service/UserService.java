@@ -30,7 +30,6 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
-
         List<Group> groups = groupRepository.findGroupsByUserId(user.getId());
 
         List<UserDashboardResponse.GroupBalance> groupBalances = new ArrayList<>();
@@ -46,9 +45,14 @@ public class UserService {
             groupBalances.add(UserDashboardResponse.GroupBalance.builder()
                     .groupId(group.getId())
                     .groupName(group.getName())
+                    .memberIds(group.getMembers().stream().map(mem -> UserDashboardResponse.UserInfo.builder()
+                            .id(mem.getId())
+                            .name(mem.getName())
+                            .emailId(mem.getEmail())
+                            .build()).toList())
+                    .description(group.getDescription())
                     .balance(net)
-                    .build()
-            );
+                    .build());
         }
 
         return UserDashboardResponse.builder()
@@ -65,10 +69,10 @@ public class UserService {
         if (request.getName() != null && !request.getName().isEmpty()) {
             user.setName(request.getName());
         }
-        if(request.getEmail() != null && !request.getEmail().isEmpty()) {
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
             user.setEmail(request.getEmail());
         }
-        if(request.getPassword() != null && !request.getPassword().isEmpty()) {
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             // Encrypt password using BCrypt
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
@@ -89,14 +93,13 @@ public class UserService {
         List<User> users = userRepository.findAll();
 
         List<GetAllUserResponse> allUsers = new ArrayList<>();
-        for (User user: users) {
+        for (User user : users) {
             allUsers.add(
                     GetAllUserResponse.builder()
                             .emailId(user.getEmail())
                             .name(user.getName())
                             .id(user.getId())
-                            .build()
-            );
+                            .build());
         }
         return allUsers;
     }
