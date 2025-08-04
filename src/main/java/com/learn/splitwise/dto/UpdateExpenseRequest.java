@@ -8,5 +8,6 @@ import java.util.List;
 public class UpdateExpenseRequest {
     private String description;
     private Double amount;
+    private Long paidByUserId;
     private List<Long> splitAmongUserIds;
 }

@@ -13,6 +13,7 @@ import java.util.List;
 public class GroupDashboardResponse {
     private Long groupId;
     private String groupName;
+    private String description;
     private List<Members> members;
     private List<Balances> balances;
     private List<NetBalances> netBalances;
@@ -22,8 +23,9 @@ public class GroupDashboardResponse {
     @Builder
     @AllArgsConstructor
     public static class Members {
-        private Long userId;
-        private String userName;
+        private Long id;
+        private String name;
+        private String emailId;
     }
 
     @Data
@@ -44,6 +46,8 @@ public class GroupDashboardResponse {
         private Double amount;
         private LocalDateTime createdAt;
         private String createdByName;
+        private Long paidByUserId;
+        private List<Long> splitAmongUserIds;
     }
 
     @Data

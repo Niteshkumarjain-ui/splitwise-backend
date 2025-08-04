@@ -98,8 +98,7 @@ public class ExpenseService {
                         .toUser(toUser)
                         .amount(newAmount)
                         .group(group)
-                        .build()
-                );
+                        .build());
 
             } else {
                 // exact offset → delete reverse
@@ -113,11 +112,9 @@ public class ExpenseService {
                     .toUser(toUser)
                     .amount(amount)
                     .group(group)
-                    .build()
-            );
+                    .build());
         }
     }
-
 
     public List<ExpenseResponse> getExpensesByGroup(Long groupId) {
         Group group = groupRepository.findById(groupId)
@@ -131,8 +128,8 @@ public class ExpenseService {
                             .map((split -> ExpenseResponse.SplitInfo.builder()
                                     .user(split.getUser().getName())
                                     .amount(split.getAmount())
-                                    .build())
-                            ).toList();
+                                    .build()))
+                            .toList();
 
                     return ExpenseResponse.builder()
                             .id(expense.getId())
@@ -149,7 +146,8 @@ public class ExpenseService {
     public Expense updateExpense(Long expenseId, UpdateExpenseRequest request) {
         Expense expense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new CustomException("Expense is not found", HttpStatus.NOT_FOUND));
-
+        User paidByUser = userRepository.findById(request.getPaidByUserId())
+                .orElseThrow(() -> new CustomException("PaidBy User not found", HttpStatus.NOT_FOUND));
         List<Split> oldSplits = splitRepository.findByExpense(expense);
         for (Split split : oldSplits) {
             if (!split.getUser().getId().equals(expense.getCreatedBy().getId())) {
@@ -164,6 +162,7 @@ public class ExpenseService {
             expense.setDescription(request.getDescription());
         if (request.getAmount() != null && request.getAmount() != 0.0)
             expense.setAmount(request.getAmount());
+        expense.setCreatedBy(paidByUser);
         expenseRepository.save(expense);
 
         List<User> users = userRepository.findAllById(request.getSplitAmongUserIds());
@@ -177,7 +176,7 @@ public class ExpenseService {
                     .build();
             splitRepository.save(newSplit);
 
-            if(!user.getId().equals(expense.getCreatedBy().getId())) {
+            if (!user.getId().equals(expense.getCreatedBy().getId())) {
                 updateBalance(user, expense.getCreatedBy(), splitAmount, expense.getGroup());
             }
         }
@@ -209,9 +208,9 @@ public class ExpenseService {
                 .orElseThrow(() -> new CustomException("Expense not found", HttpStatus.NOT_FOUND));
 
         // reverse all balances
-        List<Split>splits = splitRepository.findByExpense(expense);
+        List<Split> splits = splitRepository.findByExpense(expense);
 
-        for(Split split: splits) {
+        for (Split split : splits) {
             if (!split.getUser().getId().equals(expense.getCreatedBy().getId())) {
                 reverseBalance(split.getUser(), expense.getCreatedBy(), split.getAmount(), expense.getGroup());
             }
@@ -228,12 +227,11 @@ public class ExpenseService {
         List<Split> splits = splitRepository.findByExpense(expense);
 
         List<ExpenseDetailsResponse.Split> splitList = new ArrayList<>();
-        for (Split split: splits) {
-            splitList.add( ExpenseDetailsResponse.Split.builder()
+        for (Split split : splits) {
+            splitList.add(ExpenseDetailsResponse.Split.builder()
                     .userName(split.getUser().getName())
                     .amountOwed(split.getAmount())
-                    .build()
-            );
+                    .build());
         }
 
         return ExpenseDetailsResponse.builder()
@@ -244,8 +242,6 @@ public class ExpenseService {
                 .amount(expense.getAmount())
                 .createdAt(expense.getCreatedAt())
                 .build();
-
-
 
     }
 }
