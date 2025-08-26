@@ -21,14 +21,14 @@ A backend system for managing shared group expenses, similar to Splitwise. Built
 
 ## 📦 Tech Stack
 
-| Layer     | Technology           |
-|----------|----------------------|
-| Backend   | Java 17, Spring Boot |
-| Database  | PostgreSQL           |
-| Security  | Spring Security + JWT |
-| ORM       | Hibernate / JPA      |
-| API Docs  | Swagger (SpringDoc OpenAPI) |
-| Build Tool| Maven                |
+| Layer      | Technology                  |
+| ---------- | --------------------------- |
+| Backend    | Java 17, Spring Boot        |
+| Database   | PostgreSQL                  |
+| Security   | Spring Security + JWT       |
+| ORM        | Hibernate / JPA             |
+| API Docs   | Swagger (SpringDoc OpenAPI) |
+| Build Tool | Maven                       |
 
 ---
 
@@ -78,6 +78,17 @@ spring.jpa.hibernate.ddl-auto=update
 
 ---
 
+## 🐳 Run with Docker
+
+You can run the application using Docker. Make sure you have a PostgreSQL running in local.
+
+```bash
+docker build -t splitwise-backend .
+docker run -p 8080:8080 splitwise-backend
+```
+
+---
+
 ## 🔐 Authentication Flow
 
 - `POST /api/auth/signup` → Register
@@ -120,6 +131,7 @@ http://localhost:8080/v3/api-docs
 ## 🧮 Simplified Debt Calculation
 
 Group dashboard includes:
+
 - Each member’s current balance
 - Simplified debt resolution (minimized # of transactions)
 - Net balances showing who owes whom
